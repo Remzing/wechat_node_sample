@@ -8,8 +8,10 @@ Desktop.ini
 # Recycle Bin used on file shares
 $RECYCLE.BIN/
 
-#ignore npm 
+#ignore npm
 /node_modules/
+
+/config/wechat.txt
 
 # Windows Installer files
 *.cab
