@@ -223,8 +223,8 @@ Wechat.prototype.fetchMaterial = function(mediaId, type, permanent) {
 					url += '&media_id=' + mediaId
 				}
 				
-				console.log('ryy-29-0:' + JSON.stringify(options))
-				console.log('ryy1111111111:' + mediaId)
+				console.log('ryy-fetch-options0:' + JSON.stringify(options))
+				console.log('ryy-fetch-mediaId:' + mediaId)
 				//如果是图文或者视频就去请求对应的素材数据
 				if (type === 'news' || type === 'video') {
 					request(options).then(function(response) {

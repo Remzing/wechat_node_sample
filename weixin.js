@@ -121,25 +121,27 @@ exports.reply = function* (next) {
 		}
 		else if (content === '10') {
 			//先拿到上传的图文
-			var picData = yield wechatApi.uploadMaterial('image', __dirname + '/test/test.jpg', {})
-
+			var picData = yield wechatApi.uploadMaterial('image', __dirname + '/test/test.jpg', {type: 'image'})
+			console.log("10de-data000:" + JSON.stringify(picData))
 			var media = {
 				articles: [{
-					tilte: 'tutu',
+					title: '十三岁的小仙女',
 					thumb_media_id: picData.media_id,
 					author: 'renyy',
-				  digest: "meiyou",
+				  digest: "儿童节快乐",
 	        show_cover_pic: 1,
-	        content: "没有内容",
+	        content: "想看正文？等着吧",
 	        content_source_url: "https://github.com"
 				}]
 			}
 			// 新增永久图文消息
 			var data = yield wechatApi.uploadMaterial("news", media, {})
+			console.log("10de-data001:" + JSON.stringify(data))
+
 			//获取到永久图文消息
 			data = yield wechatApi.fetchMaterial(data.media_id, "news", {})
 
-			console.log("10de-datanews:" + data.news_item)
+			console.log("10de-data002:" + JSON.stringify(data))
 
 			var items = data.news_item 
 			var news = []
@@ -148,12 +150,47 @@ exports.reply = function* (next) {
 				news.push({
 					title: items.title,
 					description: items.digest,
+					description: item.digest,
 					picUrl: picData.url,
-					url: items.url
+					url: item.url
 				})
 			})
 
 			reply = news;
+		}
+		else if (content === '条数') {
+			var counts = yield wechatApi.countMaterial()
+
+			console.log('count:' + JSON.stringify(counts))
+
+			//yield 高级语法，实现并发执行
+			var results = yield [
+				wechatApi.batchMaterial({
+					type: 'image',
+					offset: 0,
+					count: 10
+				}),
+				wechatApi.batchMaterial({
+				type: 'video',
+					offset: 0,
+					count: 10
+				}),
+				wechatApi.batchMaterial({
+					type: 'voice',
+					offset: 0,
+					count: 10
+				}),
+				wechatApi.batchMaterial({
+					type: 'news',
+					offset: 0,
+					count: 10
+				})
+			]
+
+			console.log('ryy-count:' + JSON.stringify(results))
+
+			reply = '获取count成功'
+			
 		}
 
 		this.body = reply;
