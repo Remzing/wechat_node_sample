@@ -148,8 +148,7 @@ exports.reply = function* (next) {
 
 			items.forEach(function(item) {
 				news.push({
-					title: items.title,
-					description: items.digest,
+					title: item.title,
 					description: item.digest,
 					picUrl: picData.url,
 					url: item.url

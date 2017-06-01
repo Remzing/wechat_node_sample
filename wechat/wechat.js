@@ -293,7 +293,7 @@ Wechat.prototype.countMaterial = function() {
 						resolve(_data)
 					}
 					else {
-						throw new Error('Delete material fails')
+						throw new Error('count material fails')
 					}
 				})
 				.catch(function(err) {
