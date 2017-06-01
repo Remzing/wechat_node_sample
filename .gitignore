@@ -11,7 +11,7 @@ $RECYCLE.BIN/
 #ignore npm
 /node_modules/
 
-wechat.txt
+/config/wechat.txt
 
 # Windows Installer files
 *.cab
