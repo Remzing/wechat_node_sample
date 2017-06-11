@@ -4,28 +4,10 @@ var Promise = require('bluebird')
 var _ = require('lodash')
 var request = Promise.promisify(require("request")); //requset 改为Promise
 var util = require('./util')
+var api = require('../config/api')
 var fs = require('fs')
 
-var prefix = 'https://api.weixin.qq.com/cgi-bin/'
-var api = {
-	accessToken: prefix + 'token?grant_type=client_credential',
-	//上传格式。参见微信开发者文档
-	temporary: {//临时
-		upload: prefix + 'media/upload?',
-		fetch: prefix + 'media/get?'
-	},
-	permanent: {//永久
-		upload: prefix + 'material/add_material?',
-		fetch: prefix + 'material/get_material?',
-		uploadNews: prefix + 'material/add_news?',
-		uploadNewsPic: prefix + 'media/uploadimg?',
-		del: prefix + 'material/del_material?',
-		update: prefix + 'material/update_news?',
-		count: prefix + 'material/get_materialcount?',
-		batch: prefix + 'material/batchget_material?',
-		
-	}
-}
+
 /**
  * 获取和更新access_token，以保证access_token正常，使接口调用正常进行
  * params opts 与微信接口连通、调试的配置项
@@ -40,6 +22,9 @@ function Wechat(opts) {
 	this.fetchAccessToken()
 }
 
+/**
+ * 获取票据
+ */
 Wechat.prototype.fetchAccessToken = function() {
 	var that = this;
 
@@ -52,7 +37,7 @@ Wechat.prototype.fetchAccessToken = function() {
 	}
 
 	//带then函数之后，该对象变为promise对象
-	this
+	return this
 		.getAccessToken()
 		.then(function(data) {
 			try {
@@ -83,6 +68,9 @@ Wechat.prototype.fetchAccessToken = function() {
 		})
 }
 
+/**
+ * 判断票据是否过期
+ */
 Wechat.prototype.isValidAccessToken = function(data) {
 	if (!data || !data.access_token || !data.expires_in) {
 		return false;
@@ -100,6 +88,10 @@ Wechat.prototype.isValidAccessToken = function(data) {
 	}
 }
 
+/**
+ * 更新票据
+ * @return 
+ */
 Wechat.prototype.updateAccessToken = function() {
 	var appID = this.appID;
 	var appSecret = this.appSecret;
@@ -122,6 +114,13 @@ Wechat.prototype.updateAccessToken = function() {
 	})
 }
 
+/**
+ * 上传素材
+ * @params type 上传素材的类型
+ * @params material 上传该素材的一些必要数据
+ * @params permanent 通过这个参数有无，判断上传素材的类型是临时还是永久
+ * @return 
+ */
 Wechat.prototype.uploadMaterial = function(type, material, permanent) {
 	var that = this ;
 	var form = {};
@@ -192,6 +191,9 @@ Wechat.prototype.uploadMaterial = function(type, material, permanent) {
 	})
 }
 
+/**
+ * 获取素材
+ */
 Wechat.prototype.fetchMaterial = function(mediaId, type, permanent) {
 	var that = this ;
 	var fetchUrl = api.temporary.fetch;
@@ -234,7 +236,7 @@ Wechat.prototype.fetchMaterial = function(mediaId, type, permanent) {
 							resolve(_data)
 						}
 						else {
-							throw new Error('fetch material fails')
+							throw new Error('Fetch material fails')
 						}
 					})
 					.catch(function(err) {
@@ -248,6 +250,9 @@ Wechat.prototype.fetchMaterial = function(mediaId, type, permanent) {
 	})
 }
 
+/**
+ * 删除素材
+ */
 Wechat.prototype.deleteMaterial = function(mediaId) {
 	var that = this ;
 	var form = {
@@ -277,6 +282,9 @@ Wechat.prototype.deleteMaterial = function(mediaId) {
 	})
 }
 
+/**
+ * 各种素材数量（video,image,voice,news）
+ */
 Wechat.prototype.countMaterial = function() {
 	var that = this ;
 
@@ -303,6 +311,9 @@ Wechat.prototype.countMaterial = function() {
 	})
 }
 
+/**
+ * 批量获取所有素材的详细数据
+ */
 Wechat.prototype.batchMaterial = function(options) {
 	var that = this ;
 
@@ -323,7 +334,7 @@ Wechat.prototype.batchMaterial = function(options) {
 						resolve(_data)
 					}
 					else {
-						throw new Error('Delete material fails')
+						throw new Error('Batch material fails')
 					}
 				})
 				.catch(function(err) {
@@ -333,7 +344,9 @@ Wechat.prototype.batchMaterial = function(options) {
 	})
 }
 
-
+/**
+ * 更新素材
+ */
 Wechat.prototype.updateMaterial = function(mediaId, news) {
 	var that = this ;
 	var form = {
@@ -355,7 +368,7 @@ Wechat.prototype.updateMaterial = function(mediaId, news) {
 						resolve(_data)
 					}
 					else {
-						throw new Error('Delete material fails')
+						throw new Error('Update material fails')
 					}
 				})
 				.catch(function(err) {
@@ -365,6 +378,232 @@ Wechat.prototype.updateMaterial = function(mediaId, news) {
 	})
 }
 
+/**
+ * 创建标签
+ */
+Wechat.prototype.createTag = function(name) {
+	var that = this ;
+
+	return new Promise(function(resolve, reject){
+		that
+			.fetchAccessToken()
+			.then(function(data) {
+				var url = api.tags.create + 'access_token=' + data.access_token 
+
+				var form = {
+					tag: {
+						name: name
+					}
+				}
+
+				request({method:'POST',url: url, body: form, json: true}).then(function(response) {
+					var _data = response.body;
+
+					if (_data) {
+						resolve(_data)
+					}
+					else {
+						throw new Error('Create tag  fails')
+					}
+				})
+				.catch(function(err) {
+					reject(err)
+				})
+			})
+	})
+}
+
+/**
+ * 获取标签
+ */
+Wechat.prototype.fetchTag = function() {
+	var that = this ;
+
+	return new Promise(function(resolve, reject){
+		that
+			.fetchAccessToken()
+			.then(function(data) {
+				var url = api.tags.fetch + 'access_token=' + data.access_token 
+
+				var form = {
+					tag: {
+						name: name
+					}
+				}
+
+				request({url: url, json: true}).then(function(response) {
+					var _data = response.body;
+
+					if (_data) {
+						resolve(_data)
+					}
+					else {
+						throw new Error('Create tag  fails')
+					}
+				})
+				.catch(function(err) {
+					reject(err)
+				})
+			})
+	})
+}
+
+/**
+ * 更新标签
+ */
+Wechat.prototype.updateTag = function(id, name) {
+	var that = this ;
+
+	return new Promise(function(resolve, reject){
+		that
+			.fetchAccessToken()
+			.then(function(data) {
+				var url = api.tags.update + 'access_token=' + data.access_token 
+
+				var form = {
+					tag: {
+						id: id,
+						name: name
+					}
+				}
+
+				request({method:'POST',url: url, body: form, json: true}).then(function(response) {
+					var _data = response.body;
+
+					if (_data) {
+						resolve(_data)
+					}
+					else {
+						throw new Error('Create tag  fails')
+					}
+				})
+				.catch(function(err) {
+					reject(err)
+				})
+			})
+	})
+}
+
+/**
+ * 创建菜单
+ */
+Wechat.prototype.createMenu = function(menu) {
+	var that = this ;
+
+	return new Promise(function(resolve, reject){
+		that
+			.fetchAccessToken()
+			.then(function(data) {
+				var url = api.menu.create + 'access_token=' + data.access_token 
+
+				request({method:'POST',url: url, body: menu, json: true}).then(function(response) {
+					var _data = response.body;
+
+					if (_data) {
+						resolve(_data)
+					}
+					else {
+						throw new Error('Create menu  fails')
+					}
+				})
+				.catch(function(err) {
+					reject(err)
+				})
+			})
+	})
+}
+
+/**
+ * 获取菜单
+ */
+Wechat.prototype.getMenu = function(menu) {
+	var that = this ;
+
+	return new Promise(function(resolve, reject){
+		that
+			.fetchAccessToken()
+			.then(function(data) {
+				var url = api.menu.get + 'access_token=' + data.access_token 
+
+				request({url: url, json: true}).then(function(response) {
+					var _data = response.body;
+
+					if (_data) {
+						resolve(_data)
+					}
+					else {
+						throw new Error('Get menu  fails')
+					}
+				})
+				.catch(function(err) {
+					reject(err)
+				})
+			})
+	})
+}
+
+/**
+ * 删除菜单
+ */
+Wechat.prototype.deleteMenu = function() {
+	var that = this ;
+	console.log('ryy-test2')
+	return new Promise(function(resolve, reject){
+		that
+			.fetchAccessToken()
+			.then(function(data) {
+				console.log('ryy-test3')
+				var url = api.menu.del + 'access_token=' + data.access_token
+
+				request({url: url, json: true}).then(function(response) {
+					var _data = response.body;
+
+					if (_data) {
+						resolve(_data)
+					}
+					else {
+						throw new Error('Delete menu fails')
+					}
+				})
+				.catch(function(err) {
+					reject(err)
+				})
+			})
+	})
+}
+
+/**
+ * 获取自定义菜单
+ */
+Wechat.prototype.getCurrentMenu = function(menu) {
+	var that = this ;
+
+	return new Promise(function(resolve, reject){
+		that
+			.fetchAccessToken()
+			.then(function(data) {
+				var url = api.menu.current + 'access_token=' + data.access_token 
+
+				request({url: url, json: true}).then(function(response) {
+					var _data = response.body;
+
+					if (_data) {
+						resolve(_data)
+					}
+					else {
+						throw new Error('Get current menu  fails')
+					}
+				})
+				.catch(function(err) {
+					reject(err)
+				})
+			})
+	})
+}
+
+/**
+ * 拼接返回xml，发送xml信息
+ */
 Wechat.prototype.reply = function() {
 	var content = this.body;
 	var message = this.weixin;

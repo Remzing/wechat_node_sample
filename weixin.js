@@ -2,8 +2,17 @@
 
 var config = require('./config')
 var Wechat = require('./wechat/wechat')
+var menu = require('./config/menu')
 
 var wechatApi = new Wechat(config.wechat)
+console.log('ryy-test1')
+
+wechatApi.getMenu().then(function() {
+	return wechatApi.createMenu(menu)
+})
+.then(function(msg) {
+	console.log('当前菜单结构：' + JSON.stringify(msg))
+})
 
 //负责接收、回复消息
 exports.reply = function* (next) {
@@ -40,6 +49,39 @@ exports.reply = function* (next) {
 		}
 		else if (message.Event ==='VIEW') { //扫描
 			this.body = '点击了菜单中的链接咯： ' + message.EventKey
+		}
+		else if (message.Event ==='scancode_push') { 
+			console.log('扫码推送事件type:' + message.ScanCodeInfo.ScanType)
+			console.log('扫码推送事件结果:' + message.ScanCodeInfo.ScanResult)
+			this.body = '扫码推送事件 ' + message.EventKey
+		}
+		else if (message.Event ==='scancode_waitmsg') { 
+			console.log('扫码推送中TYPE:' + message.ScanCodeInfo.ScanType)
+			console.log('扫码推送中结果:' + message.ScanCodeInfo.ScanResult)
+			this.body = '扫码推送中 ' + message.EventKey
+		}
+		else if (message.Event ==='pic_sysphoto') { 
+			console.log('弹出系统拍照count:' + message.Count)
+			console.log('弹出系统拍照List:' + message.PicList)
+			this.body = '弹出系统拍照： ' + message.EventKey
+		}
+		else if (message.Event ==='pic_photo_or_album') { 
+			console.log('弹出拍照或者相册count:' + message.Count)
+			console.log('弹出拍照或者相册List:' + message.PicList)
+			this.body = '弹出拍照或者相册 ' + message.EventKey
+		}
+		else if (message.Event ==='pic_weixin') { 
+			console.log('弹出微信相册发图器count:' + message.Count)
+			console.log('弹出微信相册发图器List:' + message.PicList)
+			this.body = '弹出微信相册发图器 ' + message.EventKey
+		}
+		else if (message.Event ==='location_select') { 
+			console.log('弹出微信相册发图器X:' + message.Location_X)
+			console.log('弹出微信相册发图器y:' + message.Location_Y)
+			console.log('弹出微信相册发图器Scale:' + message.Scale)
+			console.log('弹出微信相册发图器Label:' + message.Label)
+			console.log('弹出微信相册发图器Poiname:' + message.Poiname)
+			this.body = '弹出地理位置选择器 ' + message.EventKey
 		}
 	}
 	else if (message.MsgType ==='text') {
