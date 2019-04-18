@@ -9,4 +9,4 @@ var app = new Koa()
 app.use(wechat(config.wechat, weixin.reply))
 
 app.listen(8080)
-console.log('server running port: 8080')
+console.log('server running port: 8080 come in')
